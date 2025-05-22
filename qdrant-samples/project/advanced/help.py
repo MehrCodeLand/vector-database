@@ -49,6 +49,3 @@ def cat_description():
             desc.append("This is a white cat on pillow with blue eyes.")
     return desc
         
-        
-
-print(f"{count_images('images/cats')}")

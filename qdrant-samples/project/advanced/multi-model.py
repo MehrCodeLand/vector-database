@@ -70,7 +70,6 @@ def embedding_text(text):
     except Exception as e:
         print(f"Error generating text embedding: {e}")
         return None
-    
 
 def get_points(
         id, 
@@ -102,7 +101,6 @@ def get_points(
         print(f"Error creating PointStruct: {e}")
         return None
 
-
 def save_image_to_qdrant(collection_name , points , image_path):
     try:
         if not is_collection_exists(collection_name=collection_name):
@@ -119,7 +117,23 @@ def save_image_to_qdrant(collection_name , points , image_path):
         print(f"Error saving image to Qdrant: {e}")
 
 
-def search_image_by_text(
+def search_image_by_query_user(user_query, collection_name , top_k=5):
+    try:
+        query_embedding = embedding_text(user_query)
+        results = client.search(
+            collection_name=collection_name,
+            query_vector={
+                "text": query_embedding.tolist()
+            },
+            limit=top_k,
+            filter=None
+        )
+        return [(result.payload["file_name"], result.score) for result in results]
+    except Exception as e:
+        print(f"Error searching image by user query: {e}")
+        return None
+
+def search_image_by_text_payload(
         category,
         description,
         type_of_category,
@@ -143,7 +157,7 @@ def search_image_by_text(
         print(f"Error searching image by text: {e}")
         return None
     
-def create_points(image_dir , category , description , type_of_category):
+def create_points(image_dir , animal):
     try:
         image_dir = f"{image_dir}"
         image_files = [f for f in os.listdir(image_dir) if f.endswith(('.jpg', '.jpeg', '.png'))]
@@ -151,7 +165,7 @@ def create_points(image_dir , category , description , type_of_category):
         for i, image_file in enumerate(image_files):
             image_path = os.path.join(image_dir, image_file)
             embedding_image = embedding_image(image_path)
-            embedding_text = embedding_text("This is a sample text description.")
+            embedding_text = embedding_text(f"{animal.category} {animal.type_of_category} {animal.description}")
             points.append(
                 get_points(
                     id=i,
@@ -159,9 +173,9 @@ def create_points(image_dir , category , description , type_of_category):
                     embedding_text=embedding_text,
                     image_path=image_path,
                     file_name=image_file,
-                    category=f"{category}",
-                    description=f"{description}",
-                    type_of_category=f"{type_of_category}"
+                    category=f"{animal.category}",
+                    description=f"{animal.description}",
+                    type_of_category=f"{animal.type_of_category}"
                 )
             )
         return points
@@ -181,10 +195,8 @@ def create_images(points):
         print(f"Error creating images: {e}")
         return None
 
-    
-
-
 def create_class_animal_data():
+    animals = []
     try:
         images_len , files_name = count_images('images/cats')
         desc = cat_description()
@@ -197,17 +209,111 @@ def create_class_animal_data():
                 des=desc[i],
                 type="cat"
             )
+            animals.append(animal)
             print(f"Animal {i+1}: {animal.name}, Category: {animal.category}, Description: {animal.description}, Type: {animal.type_of_category}")
+        return animals  
     except Exception as e:
         print(f'error')
         return None    
 
+def get_image_file_name(image_dir):
+    try:
+        image_files = [f for f in os.listdir(image_dir) if f.endswith(('.jpg', '.jpeg', '.png'))]
+        image_files.sort()  # Sort filenames alphabetically
+        return image_files
+    except Exception as e:
+        print(f"Error getting image file names: {e}")
+        return None
 
-# time to run app
+def create_upsert():
+    # create collection
+    try:
+        create_collection("advanced_image_search")
+    except Exception as e:
+        print(f"Error creating collection: {e}")
+        return None
+    
+    # we have all datas ( animals )
+    animals = create_class_animal_data()
+    if animals is None:
+        print("No animals data available.")
+        return None
+    
+    # create points
+    points = []
+    file_names = get_image_file_name("images/cats")
+    for i , animal in animals:
+        points.append(get_points(
+            id = i,
+            embedding_image=embedding_image(f"images/cats/{animal.name}"),
+            embedding_text=embedding_text(f"{animal.category} {animal.type_of_category} {animal.description}"),
+            image_path=f"images/cats/{animal.name}",
+            file_name=file_names[i  - 1],
+            category=animal.category,
+            description=animal.description,
+            type_of_category=animal.type_of_category    
+        ))
+
+    # save points to qdrant
+    for point in points:
+        save_image_to_qdrant(
+            collection_name="advanced_image_search",
+            points=point,
+            image_path=point.payload["path"]
+        )
+
+    
+
+    
+def main():
+    create_upsert()
+
+    # search time
+    user_query = "show me the white cat"
+    result = search_image_by_query_user(
+        user_query=user_query,
+        collection_name="advanced_image_search",
+        top_k=5
+    )
+    if result is not None:
+        print(f"Search results for query '{user_query}':")
+        for file_name, score in result:
+            print(f"File: {file_name}, Score: {score}")
+    else:
+        print("No results found.")
+
+    
+    # search by payload
+    category = "animal"
+    description = "white cat"
+    type_of_category = "cat"
+    result = search_image_by_text_payload(
+        category=category,
+        description=description,
+        type_of_category=type_of_category,
+        colletion_name="advanced_image_search",
+        query_text=f"{category} {description} {type_of_category}",
+        top_k=5
+    )
+    if result is not None:
+        print(f"Search results for payload '{category} {description} {type_of_category}':")
+        for file_name, score in result:
+            print(f"File: {file_name}, Score: {score}")
+    else:
+        print("No results found.")
 
 
 
-create_points()
+if __name__ == "__main__":
+    main()
+
+
+
+
+    
+    
+
+
 
 """
     create 
