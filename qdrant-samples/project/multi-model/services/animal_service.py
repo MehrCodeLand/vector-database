@@ -3,14 +3,12 @@ from services.file_service import FileService
 from typing import List, Optional
 
 class AnimalService:
-    """Handle animal data operations"""
     
     def __init__(self, images_directory: str = "images/cats"):
         self.images_directory = images_directory
         self.file_service = FileService()
 
     def create_animals_from_directory(self) -> List[Animal]:
-        """Create animal objects from images in directory"""
         animals = []
         
         try:

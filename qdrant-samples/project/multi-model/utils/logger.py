@@ -5,7 +5,6 @@ import logging
 from typing import Optional
 
 class Logger:
-    """Enhanced logging utility"""
     def __init__(self, log_file: str = "logfile.txt", level: str = "INFO"):
         self.log_file = log_file
         

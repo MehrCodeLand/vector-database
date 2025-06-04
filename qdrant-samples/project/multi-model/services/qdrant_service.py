@@ -6,14 +6,12 @@ from models.animal import Animal
 from utils.logger import Logger
 
 class QdrantService:
-    """Handle Qdrant vector database operations"""
     
-    def __init__(self, host: str = "192.168.110.18", port: int = 6333):
+    def __init__(self, host: str = "localhost", port: int = 6333):
         self.client = QdrantClient(host, port=port)
         self.logger = Logger()
 
     def collection_exists(self, collection_name: str) -> bool:
-        """Check if collection exists"""
         try:
             return self.client.collection_exists(collection_name=collection_name)
         except Exception as e:
@@ -21,7 +19,6 @@ class QdrantService:
             return False
 
     def create_collection(self, collection_name: str) -> bool:
-        """Create a new collection with proper vector configuration"""
         try:
             if self.collection_exists(collection_name):
                 self.logger.info(f"Collection '{collection_name}' already exists.")
@@ -42,7 +39,6 @@ class QdrantService:
 
     def create_point(self, point_id: int, image_embedding: np.ndarray, 
                     text_embedding: np.ndarray, animal: Animal) -> Optional[PointStruct]:
-        """Create a point structure for Qdrant"""
         try:
             if image_embedding is None or text_embedding is None:
                 self.logger.warning(f"Invalid embeddings for animal: {animal.name}")
@@ -66,7 +62,6 @@ class QdrantService:
             return None
 
     def upsert_points(self, collection_name: str, points: List[PointStruct]) -> bool:
-        """Insert or update points in collection"""
         try:
             if not points:
                 self.logger.warning("No points to upsert")
@@ -88,7 +83,6 @@ class QdrantService:
 
     def search_by_text(self, collection_name: str, query_embedding: np.ndarray, 
                       limit: int = 5) -> List[Dict[str, Any]]:
-        """Search images by text embedding"""
         try:
             query_vec = query_embedding.tolist() if hasattr(query_embedding, 'tolist') else query_embedding
             

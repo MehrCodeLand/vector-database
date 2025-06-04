@@ -7,7 +7,6 @@ from typing import Optional
 from utils.logger import Logger
 
 class EmbeddingService:
-    """Handle image and text embeddings"""
     
     def __init__(self):
         self.logger = Logger()
@@ -21,7 +20,6 @@ class EmbeddingService:
             raise
 
     def get_image_embedding(self, image_path: str) -> Optional[np.ndarray]:
-        """Generate embedding for an image"""
         try:
             img = Image.open(image_path).convert('RGB')
             features = self.image_extractor(images=img, return_tensors="pt")
@@ -40,7 +38,6 @@ class EmbeddingService:
             return None
 
     def get_text_embedding(self, text: str) -> Optional[np.ndarray]:
-        """Generate embedding for text"""
         try:
             embedding = self.text_model.encode(text)
             return embedding

@@ -10,12 +10,10 @@ search_service = ImageSearchService()
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    """Health check endpoint"""
     return jsonify({"status": "healthy", "service": "Animal Image Search API"})
 
 @app.route('/initialize', methods=['POST'])
 def initialize_database():
-    """Initialize the vector database with images"""
     try:
         success = search_service.initialize_database()
         if success:
@@ -36,7 +34,6 @@ def initialize_database():
 
 @app.route('/search', methods=['POST'])
 def search_images():
-    """Search for images by text query"""
     try:
         data = request.get_json()
         if not data or 'query' not in data:
@@ -68,7 +65,6 @@ def search_images():
 
 @app.route('/search/<query>', methods=['GET'])
 def search_images_get(query):
-    """Search for images by text query via GET request"""
     try:
         limit = request.args.get('limit', 5, type=int)
         

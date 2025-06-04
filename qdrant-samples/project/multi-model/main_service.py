@@ -5,7 +5,6 @@ from utils.logger import Logger
 from typing import List, Dict, Any, Optional
 
 class ImageSearchService:
-    """Main service orchestrating all operations"""
     
     def __init__(self, collection_name: str = "animal_image_search", 
                  images_directory: str = "images/cats"):
@@ -19,7 +18,6 @@ class ImageSearchService:
         self.animal_service = AnimalService(images_directory)
 
     def initialize_database(self) -> bool:
-        """Initialize the vector database with animal data"""
         try:
             # Create collection
             if not self.qdrant_service.create_collection(self.collection_name):

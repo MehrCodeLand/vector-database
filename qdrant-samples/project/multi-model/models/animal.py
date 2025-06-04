@@ -3,7 +3,6 @@ from typing import Optional
 
 @dataclass
 class Animal:
-    """Animal data model with proper type hints"""
     name: str
     category: str
     description: str
